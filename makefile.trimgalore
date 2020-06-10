@@ -1,0 +1,20 @@
+TRIMGALORE_OPTS = --paired 
+
+# *** Internal ***
+
+# MAKECALLTRIMGALORE is a macro that defines what will be output to the .makecall
+# file, the file that records versions, file stamps, parameters etc.
+#
+# *Don't redefine!*
+MAKECALL_VERSION     = echo "`date +"%Y%m%d %H:%M:%S"`: $@ was made with `trimgalore --version`" > $@.makecall
+MAKECALL_PARAMS      = echo "	Called with parameters: $(TRIMGALORE_OPTS)" >> $@.makecall
+MAKECALL_INFILES     = echo "	Input files: $^ (`ls -lL $^|tr '\n' ','`)" >> $@.makecall
+MAKECALL_TRIMGALORE    = $(MAKECALL_VERSION); $(MAKECALL_PARAMS); $(MAKECALL_INFILES)
+
+trim_pe: $(subst .r1.fastq.gz,.tg,$(wildcard *.r1.fastq.gz)  $(filter-out $(wildcard *.tg),$(wildcard *.r1.fastq.gz)))
+
+%.tg: %.r1.fastq.gz %.r2.fastq.gz
+	@$(MAKECALL_TRIMGALORE)
+	trim_galore $< $(TRIMGALORE_OPTS) $(word 2,$^)
+	touch $@
+	@echo "`date + "%Y%m%d %H:%M:%S"` : DONE" >> $@.makecall
